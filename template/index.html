@@ -1,7 +1,5 @@
 {{define "index"}}
-{{template "header"}}
-
-<h1>--Title-- {{.Title}}</h1>
+{{template "header" .}}
 
 <p>{{.Message}}</p>
 
@@ -28,5 +26,5 @@
 </div>
 {{end}}
 
-{{template "footer"}}
+{{template "footer" .}}
 {{end}}
