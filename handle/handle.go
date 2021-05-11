@@ -13,6 +13,8 @@ import (
 
 type Handler interface {
 	Index(c echo.Context) error
+	LoginGet(c echo.Context) error
+	LoginPost(c echo.Context) error
 }
 
 type handlerImpl struct {
@@ -79,4 +81,45 @@ func (h *handlerImpl) requireLogin(c echo.Context) (model.User, error) {
 		return user, fmt.Errorf("user query failed; %w", err)
 	}
 	return user, nil
+}
+
+type loginParam struct {
+	Title   string
+	Message string
+	Account string
+}
+
+func (h *handlerImpl) LoginGet(c echo.Context) error {
+	item := loginParam{
+		Title:   "Login",
+		Message: "type your account & password:",
+		Account: "",
+	}
+	return c.Render(http.StatusOK, "login", item)
+}
+
+func (h *handlerImpl) LoginPost(c echo.Context) error {
+	item := loginParam{
+		Title:   "Login",
+		Message: "type your account & password:",
+		Account: "",
+	}
+	usr := c.FormValue("account")
+	pass := c.FormValue("pass")
+	item.Account = usr
+	var re int64
+	var user model.User
+	h.db.Where("account = ? AND password = ?", usr, pass).Find(&user).Count(&re)
+	if re <= 0 {
+		item.Message = "Wrong account or password"
+		return c.Render(http.StatusOK, "login", item)
+	}
+
+	ses, _ := session.Get(sessionName, c)
+	ses.Values["login"] = true
+	ses.Values["account"] = usr
+	ses.Values["name"] = user.Name
+	ses.Save(c.Request(), c.Response())
+
+	return c.Redirect(http.StatusFound, "/")
 }
