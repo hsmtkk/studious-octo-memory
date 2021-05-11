@@ -15,6 +15,7 @@ type Handler interface {
 	Index(c echo.Context) error
 	LoginGet(c echo.Context) error
 	LoginPost(c echo.Context) error
+	Logout(c echo.Context) error
 }
 
 type handlerImpl struct {
@@ -122,4 +123,12 @@ func (h *handlerImpl) LoginPost(c echo.Context) error {
 	ses.Save(c.Request(), c.Response())
 
 	return c.Redirect(http.StatusFound, "/")
+}
+
+func (h *handlerImpl) Logout(c echo.Context) error {
+	ses, _ := session.Get(sessionName, c)
+	ses.Values["login"] = nil
+	ses.Values["account"] = nil
+	ses.Save(c.Request(), c.Response())
+	return c.Redirect(http.StatusFound, "/login")
 }

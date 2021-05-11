@@ -40,6 +40,7 @@ func main() {
 	e.GET("/", handler.Index)
 	e.GET("/login", handler.LoginGet)
 	e.POST("/login", handler.LoginPost)
+	e.GET("/logout", handler.Logout)
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
