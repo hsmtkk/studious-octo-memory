@@ -47,7 +47,7 @@ func (h *handlerImpl) Index(c echo.Context) error {
 		return fmt.Errorf("post query failed; %w", err)
 	}
 	var groups []model.Group
-	if err := h.db.Where("created_at desc").Limit(10).Find(&groups).Error; err != nil {
+	if err := h.db.Order("created_at desc").Limit(10).Find(&groups).Error; err != nil {
 		return fmt.Errorf("group query failed; %w", err)
 	}
 
