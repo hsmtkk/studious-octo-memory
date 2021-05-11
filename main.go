@@ -5,7 +5,9 @@ import (
 	"log"
 	"text/template"
 
+	"github.com/gorilla/sessions"
 	"github.com/hsmtkk/studious-octo-memory/handle"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -23,6 +25,7 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 
 	t := &Template{
 		templates: template.Must(template.ParseGlob("template/*.html")),

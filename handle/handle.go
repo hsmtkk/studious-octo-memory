@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hsmtkk/studious-octo-memory/login"
 	"github.com/hsmtkk/studious-octo-memory/model"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -37,7 +37,7 @@ type indexParam struct {
 }
 
 func (h *handlerImpl) Index(c echo.Context) error {
-	user, err := login.RequireLogin(c)
+	user, err := h.requireLogin(c)
 	if err != nil {
 		return fmt.Errorf("login failed; %w", err)
 	}
@@ -61,4 +61,22 @@ func (h *handlerImpl) Index(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "index", item)
+}
+
+const sessionName = "ytboard-session"
+
+func (h *handlerImpl) requireLogin(c echo.Context) (model.User, error) {
+	ses, _ := session.Get(sessionName, c)
+	if ses.Values["login"] == nil || !ses.Values["login"].(bool) {
+		c.Redirect(http.StatusFound, "/login")
+	}
+	ac := ""
+	if ses.Values["account"] != nil {
+		ac = ses.Values["account"].(string)
+	}
+	var user model.User
+	if err := h.db.Where("account = ?", ac).First(&user).Error; err != nil {
+		return user, fmt.Errorf("user query failed; %w", err)
+	}
+	return user, nil
 }
