@@ -20,7 +20,7 @@
 {{range $n,$Itm := .Glist}}
 <div class="media border m-1 p-2">
     <div class="media-body">
-        <a href="/group?gid={{$Itm.ID}}"><h5 class="mt-0">{{Itm.Name}}</h5></a>
+        <a href="/group?gid={{$Itm.ID}}"><h5 class="mt-0">{{$Itm.Name}}</h5></a>
         {{$Itm.Message}}
     </div>
 </div>
