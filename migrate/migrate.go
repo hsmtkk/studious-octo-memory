@@ -11,7 +11,8 @@ import (
 )
 
 var command = &cobra.Command{
-	Use: "migrate dbPath",
+	Use:  "migrate dbPath",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		migrate(args[0])
 	},
