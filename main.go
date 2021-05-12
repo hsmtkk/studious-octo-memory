@@ -41,6 +41,8 @@ func main() {
 	e.GET("/login", handler.LoginGet)
 	e.POST("/login", handler.LoginPost)
 	e.GET("/logout", handler.Logout)
+	e.GET("/home", handler.HomeGet)
+	e.POST("/home", handler.HomePost)
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

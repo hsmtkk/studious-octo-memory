@@ -3,6 +3,7 @@ package handle
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hsmtkk/studious-octo-memory/model"
 	"github.com/labstack/echo-contrib/session"
@@ -16,6 +17,8 @@ type Handler interface {
 	LoginGet(c echo.Context) error
 	LoginPost(c echo.Context) error
 	Logout(c echo.Context) error
+	HomeGet(c echo.Context) error
+	HomePost(c echo.Context) error
 }
 
 type handlerImpl struct {
@@ -113,6 +116,7 @@ func (h *handlerImpl) LoginPost(c echo.Context) error {
 	h.db.Where("account = ? AND password = ?", usr, pass).Find(&user).Count(&re)
 	if re <= 0 {
 		item.Message = "Wrong account or password"
+		item.Account = ""
 		return c.Render(http.StatusOK, "login", item)
 	}
 
@@ -131,4 +135,76 @@ func (h *handlerImpl) Logout(c echo.Context) error {
 	ses.Values["account"] = nil
 	ses.Save(c.Request(), c.Response())
 	return c.Redirect(http.StatusFound, "/login")
+}
+
+type homeParam struct {
+	Title   string
+	Message string
+	Name    string
+	Account string
+	Plist   []model.Post
+	Glist   []model.Group
+}
+
+func (h *handlerImpl) HomeGet(c echo.Context) error {
+	user, err := h.requireLogin(c)
+	if err != nil {
+		return fmt.Errorf("login failed; %w", err)
+	}
+	var pts []model.Post
+	var gps []model.Group
+	h.db.Where("user_id = ?", user.ID).Order("created_at desc").Limit(10).Find(&pts)
+	h.db.Where("user_id = ?", user.ID).Order("created_at desc").Limit(10).Find(&gps)
+	itm := homeParam{
+		Title:   "Home",
+		Message: fmt.Sprintf("User account=%s", user.Account),
+		Name:    user.Name,
+		Account: user.Account,
+		Plist:   pts,
+		Glist:   gps,
+	}
+	return c.Render(http.StatusOK, "home", itm)
+}
+
+func (h *handlerImpl) HomePost(c echo.Context) error {
+	user, err := h.requireLogin(c)
+	if err != nil {
+		return fmt.Errorf("login failed; %w", err)
+	}
+
+	switch c.FormValue("form") {
+	case "post":
+		ad := c.FormValue("address")
+		ad = strings.TrimSpace(ad)
+		if strings.HasPrefix(ad, "https://youtu.be/") {
+			ad = strings.TrimPrefix(ad, "https://youtu.be/")
+		}
+		pt := model.Post{
+			UserID:  int(user.Model.ID),
+			Address: ad,
+			Message: c.FormValue("message"),
+		}
+		h.db.Create(&pt)
+	case "group":
+		gp := model.Group{
+			UserID:  int(user.Model.ID),
+			Name:    c.FormValue("name"),
+			Message: c.FormValue("message"),
+		}
+		h.db.Create(&gp)
+	}
+
+	var pts []model.Post
+	var gps []model.Group
+	h.db.Where("user_id = ?", user.ID).Order("created_at desc").Limit(10).Find(&pts)
+	h.db.Where("user_id = ?", user.ID).Order("created_at desc").Limit(10).Find(&gps)
+	itm := homeParam{
+		Title:   "Home",
+		Message: fmt.Sprintf("User account=%s", user.Account),
+		Name:    user.Name,
+		Account: user.Account,
+		Plist:   pts,
+		Glist:   gps,
+	}
+	return c.Render(http.StatusOK, "home", itm)
 }
